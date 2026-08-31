@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: TaskFlow API
+  description: REST API for Users, Projects & Tasks — the backend for the Developer Productivity Dashboard.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local development
+
+tags:
+  - name: Users
+  - name: Projects
+  - name: Tasks
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        data: {}
+        meta: { type: object }
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            message: { type: string }
+            statusCode: { type: integer }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+
+    UserSummary:
+      type: object
+      description: Lightweight embedded reference to a user (owner, project member, or task assignee).
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        name: { type: string }
+        initials: { type: string, example: "PN" }
+
+    User:
+      type: object
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F]{24}$", example: "60f7c2b5e1b1f2a3c4d5e6f7" }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [admin, member] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Project:
+      type: object
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        name: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [active, on-hold, completed, archived] }
+        tags:
+          type: array
+          items: { type: string }
+          maxItems: 8
+        dueDate: { type: string, format: date-time, nullable: true }
+        ownerId: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        memberIds:
+          type: array
+          items: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        owner: { $ref: "#/components/schemas/UserSummary" }
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/UserSummary" }
+        progress:
+          type: integer
+          description: Percentage of this project's tasks that are done (0 when there are no tasks yet).
+          example: 42
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        taskCounts:
+          type: object
+          properties:
+            total: { type: integer }
+            todo: { type: integer }
+            inProgress: { type: integer }
+            done: { type: integer }
+
+    Task:
+      type: object
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        title: { type: string }
+        description: { type: string }
+        projectId: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+        assigneeId: { type: string, pattern: "^[0-9a-fA-F]{24}$", nullable: true }
+        assignee:
+          allOf:
+            - { $ref: "#/components/schemas/UserSummary" }
+          nullable: true
+        status: { type: string, enum: [todo, in-progress, done] }
+        priority: { type: string, enum: [low, medium, high] }
+        dueDate: { type: string, format: date-time, nullable: true }
+        statusHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { type: string }
+              changedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Unauthorized:
+      description: Missing, invalid, or expired token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Forbidden:
+      description: Authenticated but not permitted
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+    Conflict:
+      description: Conflicting state (duplicate email, project still has tasks, etc.)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Users]
+      summary: Liveness check
+      security: []
+      responses:
+        "200": { description: OK }
+
+  /users/register:
+    post:
+      tags: [Users]
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, example: "Ada Lovelace" }
+                email: { type: string, example: "ada@example.com" }
+                password: { type: string, example: "Password123!" }
+                role: { type: string, enum: [admin, member] }
+      responses:
+        "201": { description: Account created }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /users/login:
+    post:
+      tags: [Users]
+      summary: Log in and receive a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200": { description: Logged in }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get the current authenticated user
+      responses:
+        "200": { description: OK }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: List all users
+      responses:
+        "200": { description: OK }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+    get:
+      tags: [Users]
+      summary: Get a user by id
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Users]
+      summary: Update a user (self, or admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                role: { type: string, enum: [admin, member] }
+      responses:
+        "200": { description: Updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      tags: [Users]
+      summary: Delete a user (self, or admin)
+      responses:
+        "200": { description: Deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                status: { type: string, enum: [active, on-hold, completed, archived] }
+                tags:
+                  type: array
+                  items: { type: string }
+                  maxItems: 8
+                dueDate: { type: string, format: date-time, nullable: true }
+                memberIds:
+                  type: array
+                  items: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+      responses:
+        "201": { description: Created }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+    get:
+      tags: [Projects]
+      summary: Get a project by id
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Projects]
+      summary: Update a project (owner, or admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                status: { type: string }
+                tags:
+                  type: array
+                  items: { type: string }
+                  maxItems: 8
+                dueDate: { type: string, format: date-time, nullable: true }
+                memberIds:
+                  type: array
+                  items: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+      responses:
+        "200": { description: Updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Projects]
+      summary: Delete a project (owner, or admin)
+      parameters:
+        - name: force
+          in: query
+          description: Set true to delete the project's tasks along with it
+          schema: { type: boolean, default: false }
+      responses:
+        "200": { description: Deleted }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /projects/{projectId}/tasks:
+    parameters:
+      - name: projectId
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+    get:
+      tags: [Tasks]
+      summary: List a project's tasks
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [todo, in-progress, done] } }
+        - { name: priority, in: query, schema: { type: string, enum: [low, medium, high] } }
+        - { name: assigneeId, in: query, schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [Tasks]
+      summary: Create a task under a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                assigneeId: { type: string, pattern: "^[0-9a-fA-F]{24}$", nullable: true }
+                priority: { type: string, enum: [low, medium, high] }
+                dueDate: { type: string, format: date-time, nullable: true }
+      responses:
+        "201": { description: Created }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+    get:
+      tags: [Tasks]
+      summary: Get a task by id
+      responses:
+        "200": { description: OK }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Tasks]
+      summary: Update task fields
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                assigneeId: { type: string, pattern: "^[0-9a-fA-F]{24}$", nullable: true }
+                priority: { type: string, enum: [low, medium, high] }
+                dueDate: { type: string, format: date-time, nullable: true }
+      responses:
+        "200": { description: Updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Tasks]
+      summary: Delete a task
+      responses:
+        "200": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tasks/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[0-9a-fA-F]{24}$" }
+    patch:
+      tags: [Tasks]
+      summary: Move a task to a new status (validated transition)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [todo, in-progress, done] }
+      responses:
+        "200": { description: Status updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }

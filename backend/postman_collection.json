@@ -1,0 +1,326 @@
+{
+  "info": {
+    "name": "TaskFlow API",
+    "description": "Users, Projects & Tasks REST API. Run 'Login' first \u2014 it auto-saves the token into the {{token}} collection variable used by every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "projectId", "value": "" },
+    { "key": "taskId", "value": "" },
+    { "key": "userId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/../health" }
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ada Lovelace\",\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.token) {",
+                  "  pm.collectionVariables.set('token', json.data.token);",
+                  "  pm.collectionVariables.set('userId', json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"priya@taskflow.dev\",\n  \"password\": \"Password123!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get current user (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/me"
+          }
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Priya N.\"\n}" }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.project) {",
+                  "  pm.collectionVariables.set('projectId', json.data.project.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/projects",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rate Limiter Rewrite\",\n  \"description\": \"Sliding window impl\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects?page=1&limit=20"
+          }
+        },
+        {
+          "name": "Get project by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Update project",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"on-hold\"\n}" }
+          }
+        },
+        {
+          "name": "Delete project (blocked if it has tasks)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}"
+          }
+        },
+        {
+          "name": "Delete project (force)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}?force=true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create task under project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.task) {",
+                  "  pm.collectionVariables.set('taskId', json.data.task.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/projects/{{projectId}}/tasks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Benchmark under burst load\",\n  \"priority\": \"high\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List project tasks (filtered)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/{{projectId}}/tasks?status=todo&priority=high"
+          }
+        },
+        {
+          "name": "Get task by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Update task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/tasks/{{taskId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"medium\"\n}" }
+          }
+        },
+        {
+          "name": "Move status: todo -> in-progress",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"in-progress\"\n}" }
+          }
+        },
+        {
+          "name": "Move status: in-progress -> done",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"done\"\n}" }
+          }
+        },
+        {
+          "name": "Invalid transition (expect 400): todo -> done",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"done\"\n}" }
+          }
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error cases",
+      "item": [
+        {
+          "name": "Missing auth header (expect 401)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/projects" }
+        },
+        {
+          "name": "Wrong password (expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/users/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"priya@taskflow.dev\",\n  \"password\": \"wrong-password\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create project without name (expect 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/projects",
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"no name given\"\n}" }
+          }
+        },
+        {
+          "name": "Get nonexistent project (expect 404)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects/000000000000000000000000"
+          }
+        },
+        {
+          "name": "Unknown route (expect 404)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/does-not-exist" }
+        }
+      ]
+    }
+  ]
+}
