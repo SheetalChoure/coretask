@@ -3,9 +3,6 @@ import { Loader2 } from "lucide-react";
 
 import LoginPage from "./components/auth/LoginPage";
 import DashboardHome from "./components/dashboard/DashboardHome";
-import ProjectsSection from "./components/dashboard/ProjectsSection";
-import TasksSection from "./components/dashboard/TasksSection";
-import ReportsPage from "./components/dashboard/ReportsPage";
 
 function SplashScreen() {
   return (
