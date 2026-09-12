@@ -1,18 +1,12 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-// import { TOKENS, FONT_BODY, FONT_DISPLAY } from "./constants/tokens";
-// import { AuthProvider, useAuth } from "./context/AuthContext";
-//import GlobalStyles from "./components/GlobalStyles";
+
 import LoginPage from "./components/auth/LoginPage";
-// import TopBar from "./components/nav/TopBar";
-// import Sidebar from "./components/nav/Sidebar";
 import DashboardHome from "./components/dashboard/DashboardHome";
 import ProjectsSection from "./components/dashboard/ProjectsSection";
 import TasksSection from "./components/dashboard/TasksSection";
 import ReportsPage from "./components/dashboard/ReportsPage";
 
-// Full-screen spinner shown only for the brief moment while we check
-// localStorage for an existing session on first load.
 function SplashScreen() {
   return (
     <div className="w-full min-h-screen flex items-center justify-center" style={{ background: TOKENS.bg }}>
@@ -73,7 +67,7 @@ function DashboardApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <GlobalStyles />
+      
       <AuthGate />
     </AuthProvider>
   );
