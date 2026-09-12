@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 // import { TOKENS, FONT_BODY, FONT_DISPLAY } from "./constants/tokens";
 // import { AuthProvider, useAuth } from "./context/AuthContext";
-import GlobalStyles from "./components/GlobalStyles";
+//import GlobalStyles from "./components/GlobalStyles";
 import LoginPage from "./components/auth/LoginPage";
 // import TopBar from "./components/nav/TopBar";
 // import Sidebar from "./components/nav/Sidebar";
