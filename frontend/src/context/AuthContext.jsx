@@ -3,19 +3,25 @@ import * as authApi from "../api/auth";
 
 const AuthContext = createContext(null);
 
+// Default mock developer details shown on initial page load
+const DEFAULT_DEV_USER = {
+  id: "dev-1",
+  name: "Priya Nair",
+  email: "priya@taskflow.dev",
+  role: "Full-Stack Developer",
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [status, setStatus] = useState("loading"); // loading | authenticated | guest
+  // Default directly to authenticated with developer details
+  const [user, setUser] = useState(DEFAULT_DEV_USER);
+  const [status, setStatus] = useState("authenticated"); // Defaults straight to home page
   const [error, setError] = useState(null);
 
-  // On mount, restore whatever session was saved in localStorage.
+  // Restore saved session if it exists, otherwise retain default developer profile
   useEffect(() => {
     const session = authApi.getSession();
     if (session) {
       setUser(session.user);
-      setStatus("authenticated");
-    } else {
-      setStatus("guest");
     }
   }, []);
 
@@ -47,8 +53,8 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     authApi.logout();
-    setUser(null);
-    setStatus("guest");
+    setUser(DEFAULT_DEV_USER); // Revert to dev details on logout instead of going to guest
+    setStatus("authenticated");
   }, []);
 
   return (

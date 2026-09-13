@@ -28,9 +28,9 @@ function SplashScreen() {
 function AuthGate() {
   const { status } = useAuth();
 
-  if (status === "loading") return <SplashScreen />;
-  if (status === "guest") return <LoginPage />;
-  return <DashboardApp />;
+  // if (status === "loading") return <SplashScreen />;
+  // if (status === "guest") return <LoginPage />;
+   return <DashboardApp />;
 }
 
 function DashboardApp() {
