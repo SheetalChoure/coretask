@@ -15,7 +15,7 @@ export default function DashboardHome({ search }) {
 
   const [statsData, setStatsData] = useState({ projects: [], tasks: [] });
 
-  // Re-run whenever user.id changes (handles log in / log out / user switch)
+  // Pass `user` as the dependency to satisfy react-hooks/exhaustive-deps
   useEffect(() => {
     if (!user) {
       setStatsData({ projects: [], tasks: [] });
@@ -25,15 +25,15 @@ export default function DashboardHome({ search }) {
     Promise.all([projectsApi.listProjects(), tasksApi.listAllTasks()])
       .then(([projects, tasks]) => setStatsData({ projects, tasks }))
       .catch(() => setStatsData({ projects: [], tasks: [] }));
-  }, [user?.id]);
+  }, [user]);
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight mb-1" style={{ color: TOKENS.text, fontFamily: FONT_DISPLAY }}>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight mb-1" style={{ color: TOKENS?.text || "#f3f4f6", fontFamily: FONT_DISPLAY }}>
           Good to see you, {firstName}
         </h1>
-        <p className="text-[13px] mb-5" style={{ color: TOKENS.textMuted }}>
+        <p className="text-[13px] mb-5" style={{ color: TOKENS?.textMuted || "#9ca3af" }}>
           Here's where your projects and tasks stand today.
         </p>
         <StatsOverview projects={statsData.projects} tasks={statsData.tasks} />
@@ -54,5 +54,3 @@ export default function DashboardHome({ search }) {
     </div>
   );
 }
-
-
