@@ -2,7 +2,7 @@
 // in the frontend project's environment variables to your deployed
 // backend's URL, e.g. https://your-backend.vercel.app/api/v1 — falls back
 // to localhost for local development.
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1" || "https://coretask-backend.vercel.app/api/v1";
 
 const TOKEN_KEY = "taskflow_token";
 const USER_KEY = "taskflow_user";
