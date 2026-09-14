@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-// import { Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { TOKENS, FONT_BODY, FONT_DISPLAY } from "./constants/tokens";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider ,useAuth} from "./context/AuthContext";
 import GlobalStyles from "./components/GlobalStyles";
-// import LoginPage from "./components/auth/LoginPage";
+import LoginPage from "./components/auth/LoginPage";
 import TopBar from "./components/nav/TopBar";
 import Sidebar from "./components/nav/Sidebar";
 import DashboardHome from "./components/dashboard/DashboardHome";
@@ -13,23 +13,23 @@ import ReportsPage from "./components/dashboard/ReportsPage";
 
 // Full-screen spinner shown only for the brief moment while we check
 // // localStorage for an existing session on first load.
-// function SplashScreen() {
-//   return (
-//     <div className="w-full min-h-screen flex items-center justify-center" style={{ background: TOKENS.bg }}>
-//       <Loader2 size={22} className="animate-spin" style={{ color: TOKENS.accent }} />
-//     </div>
-//   );
-// }
+function SplashScreen() {
+  return (
+    <div className="w-full min-h-screen flex items-center justify-center" style={{ background: TOKENS.bg }}>
+      <Loader2 size={22} className="animate-spin" style={{ color: TOKENS.accent }} />
+    </div>
+  );
+}
 
 // Decides between the login screen and the real app based on auth status.
 // Kept separate from DashboardApp so useAuth() can be called safely —
 // this component renders *inside* AuthProvider, DashboardApp does not need
 // to know about auth state at all beyond what its children already do.
 function AuthGate() {
-  // const { status } = useAuth();
+  const { status } = useAuth();
 
-  // if (status === "loading") return <SplashScreen />;
-  // if (status === "guest") return <LoginPage />;
+  if (status === "loading") return <SplashScreen />;
+  if (status === "guest") return <LoginPage />;
    return <DashboardApp />;
 }
 
