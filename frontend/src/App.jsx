@@ -28,6 +28,10 @@ function SplashScreen() {
 function AuthGate() {
   const { status } = useAuth();
 
+  if (status === "unauthenticated") {
+    return <LoginPage />;
+  }
+
   if (status === "loading") return <SplashScreen />;
   if (status === "guest") return <LoginPage />;
    return <DashboardApp />;
