@@ -22,7 +22,14 @@ app.get("/health", (req, res) => {
   res.status(200).json({ success: true, data: { status: "ok", uptimeSeconds: process.uptime() } });
 });
 
+
+// ADD THIS ROOT ROUTE TO FIX THE 404:
+app.get("/", (req, res) => {
+  res.status(200).json({ success: true, message: "TaskFlow API is up and running" });
+});
+
 app.use("/api/v1", apiRoutes);
+
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
