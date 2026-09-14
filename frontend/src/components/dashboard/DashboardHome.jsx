@@ -10,7 +10,7 @@ import * as projectsApi from "../../api/projects";
 import * as tasksApi from "../../api/tasks";
 
 export default function DashboardHome({ search }) {
-  const { user } = useAuth();
+  const { user ,logout} = useAuth();
   const firstName = user?.name?.split(" ")[0] || "there";
 
   const [statsData, setStatsData] = useState({ projects: [], tasks: [] });
@@ -46,11 +46,19 @@ export default function DashboardHome({ search }) {
         </div>
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-20">
-          <ProfileSummary />
+          {/* Pass logout prop to ProfileSummary */}
+          <ProfileSummary logout={logout} />
           <ActivityHeatmap />
           <WeeklyStats />
         </div>
+
+        
       </div>
     </div>
   );
 }
+
+
+
+
+
